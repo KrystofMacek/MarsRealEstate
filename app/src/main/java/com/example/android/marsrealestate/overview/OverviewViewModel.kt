@@ -21,25 +21,25 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.android.marsrealestate.network.MarsApi
-import com.example.android.marsrealestate.network.MarsApiService
 import com.example.android.marsrealestate.network.MarsProperty
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
 import java.lang.Exception
 
 class OverviewViewModel : ViewModel() {
 
     // The internal MutableLiveData String that stores the most recent response
-    private val _response = MutableLiveData<String>()
-
+    private val _status = MutableLiveData<String>()
     // The external immutable LiveData for the response String
-    val response: LiveData<String>
-        get() = _response
+    val status: LiveData<String>
+        get() = _status
+
+
+    private val _property  = MutableLiveData<MarsProperty>()
+    val property : LiveData<MarsProperty>
+        get() = _property
 
     // new coroutine Job
     private var viewModelJob = Job()
@@ -52,17 +52,21 @@ class OverviewViewModel : ViewModel() {
 
     private fun getMarsRealEstateProperties() {
         coroutineScope.launch {
-            var getPropertiesDeffered = MarsApi.retrofitService.getProperties()
-
+            // Get the Deffered object for Retrofit request
+            var getPropertiesDeffered = MarsApi.retrofitService.getPropertiesAsync()
             try {
-                val listResult = getPropertiesDeffered.await()
-                _response.value =  "Success: ${listResult.size} Mars properties retrieved"
+                // Await completion of Retrofit request
+                var listResult = getPropertiesDeffered.await()
+                if (listResult.isNotEmpty()) {
+                    _property.value = listResult[0]
+                }
+                _status.value =  "Success: ${listResult.size} Mars properties retrieved"
             } catch (e: Exception) {
-                _response.value = "Failure: ${e.message}"
+                _status.value = "Failure: ${e.message}"
             }
         }
     }
-
+        //  stop loading when the ViewModel is destroyed - Cancel the JOb
     override fun onCleared() {
         super.onCleared()
         viewModelJob.cancel()

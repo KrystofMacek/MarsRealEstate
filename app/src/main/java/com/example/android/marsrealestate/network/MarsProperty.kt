@@ -2,6 +2,7 @@
 package com.example.android.marsrealestate.network
 
 import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
 data class MarsProperty(
         val id: String,
